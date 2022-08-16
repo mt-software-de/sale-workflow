@@ -21,4 +21,6 @@
         "views/sale_workflow_process_view.xml",
         "data/automatic_workflow_data.xml",
     ],
+    "pre_init_hook": "pre_init_hook",
+    "post_init_hook": "post_init_hook",
 }
