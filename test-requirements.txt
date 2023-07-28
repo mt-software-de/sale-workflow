@@ -1,1 +1,3 @@
 odoo_test_helper
+odoo14-addon-stock_helper @ git+https://github.com/OCA/stock-logistics-warehouse.git@refs/pull/1807/head#subdirectory=setup/stock_helper
+odoo14-addon-stock_available_to_promise_release @ git+https://github.com/OCA/wms@refs/pull/769/head#subdirectory=setup/stock_available_to_promise_release
