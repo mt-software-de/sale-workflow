@@ -8,10 +8,26 @@ class TestStockReserveSale(common.SavepointCase):
         partner_form = Form(self.env["res.partner"])
         partner_form.name = "Test partner"
         self.partner = partner_form.save()
+
+        no_prebook_stock_route_id = self.env["stock.location.route"].sudo().create({
+            "name": "Test Route Without Prebook Stock",
+            "no_prebook_stock": True,
+        })
+        prebook_stock_route_id = self.env["stock.location.route"].sudo().create({
+            "name": "Test Route With Prebook Stock",
+            "no_prebook_stock": False,
+        })
         product_form = Form(self.env["product.product"])
         product_form.name = "Test Product 1"
         product_form.type = "product"
+        product_form.route_ids.add(prebook_stock_route_id)
         self.product_1 = product_form.save()
+        product_form = Form(self.env["product.product"])
+        product_form.name = "Test Product 2"
+        product_form.type = "product"
+        product_form.route_ids.add(no_prebook_stock_route_id)
+        self.product_2 = product_form.save()
+
         sale_order_form = Form(self.env["sale.order"])
         sale_order_form.partner_id = self.partner
         with sale_order_form.order_line.new() as order_line_form:
@@ -19,7 +35,20 @@ class TestStockReserveSale(common.SavepointCase):
             order_line_form.product_uom_qty = 3
         self.sale = sale_order_form.save()
 
-    def test_10_button_reservation(self):
+        sale_order_form2 = Form(self.env["sale.order"])
+        sale_order_form2.partner_id = self.partner
+        with sale_order_form2.order_line.new() as order_line_form2:
+            order_line_form2.product_id = self.product_2
+            order_line_form2.product_uom_qty = 3
+        self.sale2 = sale_order_form2.save()
+
+    def test_10_reserve_unconfirmed_release(self):
+        self.sale.reserve_stock()
+        self.sale2.reserve_stock()
+        self.assertTrue(self.sale.stock_is_reserved)
+        self.assertFalse(self.sale2.stock_is_reserved)
+
+    def test_20_button_reservation(self):
         self.sale.reserve_stock()
         self.sale._compute_stock_is_reserved()
         self.assertTrue(self.sale.stock_is_reserved)
@@ -40,12 +69,12 @@ class TestStockReserveSale(common.SavepointCase):
         )
         self.assertEqual(len(self.sale.picking_ids), 0, "There should be no picking")
 
-    def test_20_confirmation_release(self):
+    def test_30_confirmation_release(self):
         self.sale.reserve_stock()
         self.sale.action_confirm()
         self.assertFalse(self.sale.stock_is_reserved)
 
-    def test_30_cancelation_release(self):
+    def test_40_cancelation_release(self):
         self.sale.reserve_stock()
         self.sale.action_cancel()
         self.assertFalse(self.sale.stock_is_reserved)

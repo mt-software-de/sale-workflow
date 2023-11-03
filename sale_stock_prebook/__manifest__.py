@@ -8,6 +8,7 @@
     "website": "https://github.com/OCA/sale-workflow",
     "data": [
         "views/sale_views.xml",
+        "views/stock_location_route_views.xml",
     ],
     "depends": [
         "stock_helper",

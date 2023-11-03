@@ -12,6 +12,12 @@ class SaleOrderLine(models.Model):
         return values
 
     def _prepare_reserve_procurement(self, group):
+        no_prebook_routes = self.env["stock.location.route"].search(
+            [("no_prebook_stock", "=", True)]
+        )
+        for route in no_prebook_routes:
+            if route in self.product_id.route_ids:
+                return
         product_qty, procurement_uom = self.product_uom._adjust_uom_quantities(
             self.product_uom_qty, self.product_id.uom_id
         )
