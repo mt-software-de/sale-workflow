@@ -11,13 +11,18 @@ class SaleOrderLine(models.Model):
         values["used_for_sale_reservation"] = True
         return values
 
+    def _should_prebook_stock(self):
+        """Checks if SOL product has no_sale_stock_prebook set
+         to know if we need to reserve it or not"""
+        self.ensure_one()
+        for route in self.product_id.route_ids:
+            if route.no_sale_stock_prebook:
+                return False
+        return True
+
     def _prepare_reserve_procurement(self, group):
-        no_prebook_routes = self.env["stock.location.route"].search(
-            [("no_prebook_stock", "=", True)]
-        )
-        for route in no_prebook_routes:
-            if route in self.product_id.route_ids:
-                return
+        """Adjusts UOM qty for product, makes list of field values for
+         procurement group """
         product_qty, procurement_uom = self.product_uom._adjust_uom_quantities(
             self.product_uom_qty, self.product_id.uom_id
         )
@@ -31,6 +36,15 @@ class SaleOrderLine(models.Model):
             self.order_id.company_id,
             self._prepare_reserve_procurement_values(group_id=group),
         )
+
+    def _prepare_reserve_procurements(self, group):
+        """Prepares list of dicts - reserve procurements"""
+        procurements = []
+        for line in self:
+            if not line._should_prebook_stock():
+                continue
+            procurements.append(line._prepare_reserve_procurement(group))
+        return procurements
 
 
 class SaleOrder(models.Model):
@@ -87,12 +101,7 @@ class SaleOrder(models.Model):
 
         for order in self:
             group = order._create_reserve_procurement_group()
-
-            for line in order.order_line:
-                procurement = line._prepare_reserve_procurement(group)
-                if procurement:
-                    procurements.append(procurement)
-
+            procurements += order.order_line._prepare_reserve_procurements(group)
         if procurements:
             self.env["procurement.group"].run(procurements)
 

@@ -11,12 +11,13 @@ class TestStockReserveSale(common.SavepointCase):
 
         no_prebook_stock_route_id = self.env["stock.location.route"].sudo().create({
             "name": "Test Route Without Prebook Stock",
-            "no_prebook_stock": True,
+            "no_sale_stock_prebook": True,
         })
         prebook_stock_route_id = self.env["stock.location.route"].sudo().create({
             "name": "Test Route With Prebook Stock",
-            "no_prebook_stock": False,
+            "no_sale_stock_prebook": False,
         })
+        # prebook product
         product_form = Form(self.env["product.product"])
         product_form.name = "Test Product 1"
         product_form.type = "product"
@@ -25,20 +26,29 @@ class TestStockReserveSale(common.SavepointCase):
         product_form = Form(self.env["product.product"])
         product_form.name = "Test Product 2"
         product_form.type = "product"
-        product_form.route_ids.add(no_prebook_stock_route_id)
+        product_form.route_ids.add(prebook_stock_route_id)
         self.product_2 = product_form.save()
+        # non-prebook product
+        product_form = Form(self.env["product.product"])
+        product_form.name = "Test Product 3"
+        product_form.type = "product"
+        product_form.route_ids.add(no_prebook_stock_route_id)
+        self.product_3 = product_form.save()
 
         sale_order_form = Form(self.env["sale.order"])
         sale_order_form.partner_id = self.partner
         with sale_order_form.order_line.new() as order_line_form:
             order_line_form.product_id = self.product_1
             order_line_form.product_uom_qty = 3
+        with sale_order_form.order_line.new() as order_line_form:
+            order_line_form.product_id = self.product_2
+            order_line_form.product_uom_qty = 3
         self.sale = sale_order_form.save()
 
         sale_order_form2 = Form(self.env["sale.order"])
         sale_order_form2.partner_id = self.partner
         with sale_order_form2.order_line.new() as order_line_form2:
-            order_line_form2.product_id = self.product_2
+            order_line_form2.product_id = self.product_3
             order_line_form2.product_uom_qty = 3
         self.sale2 = sale_order_form2.save()
 
