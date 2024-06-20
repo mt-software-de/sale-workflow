@@ -1,0 +1,30 @@
+<odoo>
+    <record id="view_stock_picking_form" model="ir.ui.view">
+        <field name="name">stock.picking.form</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form" />
+        <field name="arch" type="xml">
+            <header position="before">
+                <div
+                    class="alert alert-warning"
+                    role="alert"
+                    attrs="{'invisible': [('stock_is_reserved', '!=', True)]}"
+                >
+                    Impossible to validate this picking because there is a reservation on the stock for this
+                    <button
+                        string="sale order"
+                        type="object"
+                        name="jump_to_sale_order"
+                        class="oe_link"
+                    />:
+                </div>
+            </header>
+            <header position="inside">
+                <field name="stock_is_reserved" invisible="1"/>
+            </header>
+            <header position="attributes">
+                <attribute name="attrs">{'invisible': [('stock_is_reserved', '=', True)]}</attribute>
+            </header>
+        </field>
+    </record>
+</odoo>
