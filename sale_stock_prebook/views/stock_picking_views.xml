@@ -16,7 +16,7 @@
                         type="object"
                         name="jump_to_sale_order"
                         class="oe_link"
-                    />:
+                    />
                 </div>
             </header>
             <header position="inside">
