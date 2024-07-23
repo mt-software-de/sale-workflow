@@ -92,3 +92,11 @@ class TestStockReserveSale(common.SavepointCase):
         self.assertFalse(self.sale.picking_ids.move_lines.move_line_ids)
         with self.assertRaises(UserError):
             self.sale.picking_ids.button_validate()
+
+    def test_update_qty_after_prebook(self):
+        self.sale.reserve_stock()
+        self.sale.order_line[0].product_uom_qty = 5
+        self.assertEqual(
+            self.sale.order_line[0].product_uom_qty,
+            self.sale.picking_ids.move_ids_without_package.product_uom_qty,
+        )
