@@ -1,6 +1,6 @@
 # Copyright 2023 Michael Tietz (MT Software) <mtietz@mt-software.de>
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl.html).
-from odoo import api, fields, models
+from odoo import _, api, fields, models
 
 
 class SaleOrderLine(models.Model):
@@ -46,6 +46,12 @@ class SaleOrderLine(models.Model):
             procurements.append(line._prepare_reserve_procurement(group))
         return procurements
 
+    def write(self, vals):
+        if "product_uom_qty" in vals and self.order_id.stock_is_reserved:
+            self.move_ids.product_uom_qty = vals["product_uom_qty"]
+
+        return super().write(vals)
+
 
 class SaleOrder(models.Model):
     _inherit = "sale.order"
@@ -77,7 +83,8 @@ class SaleOrder(models.Model):
     def _prepare_reserve_procurement_group_values(self):
         self.ensure_one()
         values = self.order_line[0]._prepare_procurement_group_vals()
-        values["name"] = f"Reservation for {values['name']}"
+        string = _("Reservation for")
+        values["name"] = f"{string}{values['name']}"
         return values
 
     def _create_reserve_procurement_group(self):
