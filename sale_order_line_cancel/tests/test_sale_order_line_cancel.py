@@ -176,3 +176,40 @@ class TestSaleOrderLineCancel(TestSaleOrderLineCancelBase):
         sale.company_id.on_sale_line_cancel_decrease_line_qty = True
         sale.action_cancel()
         self.assertEqual(sale.order_line.product_uom_qty, 10)
+
+    def test_cancel_without_move(self):
+        sale = self.sale
+        sale.picking_ids.with_context(
+            ignore_sale_order_line_cancel=True
+        ).action_cancel()
+        line = self.sale.order_line
+        self.assertEqual(line.product_uom_qty, 10)
+        self.assertEqual(line.qty_to_deliver, 10)
+        self.assertEqual(line.product_qty_remains_to_deliver, 10)
+        self.assertEqual(line.product_qty_canceled, 0)
+        line.cancel_remaining_qty()
+        self.assertEqual(line.product_uom_qty, 10)
+        self.assertEqual(line.qty_to_deliver, 10)
+        self.assertEqual(line.product_qty_remains_to_deliver, 0)
+        self.assertEqual(line.product_qty_canceled, 10)
+
+    def test_cancel_without_move_decrease_product_uom_qty(self):
+        sale = self.sale
+        sale.with_context(disable_cancel_warning=True).action_cancel()
+        sale.picking_ids.unlink()
+        sale.action_draft()
+        sale.action_confirm()
+        sale.picking_ids.with_context(
+            ignore_sale_order_line_cancel=True
+        ).action_cancel()
+        line = self.sale.order_line
+        self.assertEqual(line.product_uom_qty, 10)
+        self.assertEqual(line.qty_to_deliver, 10)
+        self.assertEqual(line.product_qty_remains_to_deliver, 10)
+        self.assertEqual(line.product_qty_canceled, 0)
+        sale.company_id.on_sale_line_cancel_decrease_line_qty = True
+        line.cancel_remaining_qty()
+        self.assertEqual(line.product_uom_qty, 0)
+        self.assertEqual(line.qty_to_deliver, 0)
+        self.assertEqual(line.product_qty_remains_to_deliver, 0)
+        self.assertEqual(line.product_qty_canceled, 10)
