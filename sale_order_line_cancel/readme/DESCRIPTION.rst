@@ -1,17 +1,13 @@
-This module allows you to cancel the remaining quantity on sale order by adding
-a dedicated action to sale lines. It also add two new fields to track canceled
-and remaining to deliver quantities.
+This module cancels only the stock moves for the remaining qty to deliver.
+Also it will track the canceled qty if a order line's stock move is canceled
+but only if there are not other started operations for this sale order line.
 
-This module differs from the original odoo behavior in the following way:
-
-* In odoo, if the update of the quantity ordered is allowed on the sale order at
-  the confirmed state, odoo will recompute the required stock operations
-  according to the new quantity. This change is possible
-  even the stock operations are started for this sale order line.
-* In this module, the quantity ordered is not updated on the sale order line to
-  keep track of the original ordered by the customer. At the same time, we
-  cancel only the stock moves for the remaining qty to deliver. This is only
-  possible if no operation is started for this sale order line.
+When the base addon is configured to also decrease the original ordered qty
+it ensures that there are now new moves created. Because by default,
+odoo will recompute the required stock operations if the ordered qty is changed.
+By canceling the operations for the remaining qty before the ordered qty is changed,
+odoo will not recompute the required stock operations, because the qty done by moves
+is the same as the ordered qty.
 
 
 .. warning::

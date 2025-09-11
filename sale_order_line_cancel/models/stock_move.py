@@ -29,18 +29,17 @@ class StockMove(models.Model):
     def _get_sale_lines_to_update_qty_canceled(self):
         sale_lines = self.env["sale.order.line"]
         for move in self:
-            if (
-                move.sale_line_id
-                and move._is_move_to_take_into_account_for_qty_canceled()
-            ):
+            if move._is_move_to_take_into_account_for_qty_canceled():
                 sale_lines |= move.sale_line_id
         return sale_lines
 
     def _is_move_to_take_into_account_for_qty_canceled(self):
         self.ensure_one()
+        sale_line = self.sale_line_id
         return (
-            self.state == "cancel"
-            and self.sale_line_id
-            and self.sale_line_id.state not in ["draft", "sent"]
+            sale_line
+            and self.state == "cancel"
             and self.picking_type_id.code == "outgoing"
+            and sale_line.state not in ["draft", "sent", "cancel"]
+            and not sale_line._get_moves_to_cancel()
         )
